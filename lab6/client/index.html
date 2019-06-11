@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <title>Система тестирования</title>
+    <!-- версия для разработки, отображает полезные предупреждения в консоли -->
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+</head>
+
+<body>
+    <div class="container mt-3">
+        <div>
+            <template v-if="!testname_is_fill">
+                <div class="form-inline">
+                        <label for="testname" class="mr-3">Название теста</label>
+                        <input type="text" class="form-control mr-4 w-50" id="testname" placeholder="Введите название теста"
+                            v-model="testname">
+                    <button @click="testname_is_fill = !testname_is_fill"  v-bind:class="[testname.length < 1 ? 'd-none' : '']" class="btn btn-outline-primary waves-effect">Создать тест</button>
+                </div>
+            </template>
+        </div>
+        <div class="row">
+            <form class="w-100" v-if="testname_is_fill" @submit.prevent="formSubmited = true">
+                <template v-for="(question, i) in questions">
+                    <div class="form-group">
+                        <label>Вопрос {{ i + 1 }}</label>
+                        <input type="text" class="form-control" v-model="question.text">
+                    </div>
+                    <div class="form-row" v-for="(answer, i) in question.answers">
+                        <span class="col-md-1">
+                            {{ i + 1 }} .
+                        </span>
+                        <input type="text" @change="i > 0 ? question.answers.push({text:'', correct: false}) : ''"
+                            class="form-control col-md-7  mr-2" v-model="question.answers[i].text"> 
+                        <div class="chip pink lighten-4">
+                            <i class='close fas fa-times'><input type="button" class="btn btn-outline-danger waves-effect w-60" value="X"
+                                @click="question.answers.length > 2 ? question.answers.splice(i,1) : ''"></i>
+                        </div>
+                        <div class="form-check col-md-2">
+						<label class="btn btn-outline-success waves-effect" >
+                            <input type="checkbox" autocomplete="off" :id="'check'+i"
+                                v-model="question.answers[i].correct">
+                            <label :for="'check'+i">Правильный</label>
+						</label class="btn btn-outline-success waves-effect">	
+                        </div>
+                    </div>
+                </template>
+
+                <hr>
+                <button class="btn btn-outline-primary waves-effect" @click="insert_question">Добавить новый вопрос</button>
+                <button class="btn btn-outline-success  waves-effect" @click="useAPI">Сохранить</button>
+                <button class="btn btn-outline-danger waves-effect" data-toggle="modal" data-target="#exampleModal">Выйти</button>
+                <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title" id="exampleModalLabel">Сохранение</h5>
+                          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                          </button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Изменения не сохранены. Всё равно выйти?</p>
+                        </div>
+                        <div class="modal-footer">
+                            <a href="index.html" class="btn btn-outline-danger waves-effect">Выйти</a>
+                            <button type="button" class="btn btn-outline-success waves-effect" @click="useAPI">Сохранить</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        new Vue({
+            el: '.container',
+            data: {
+                formSubmited: false,
+                testname_is_fill: false,
+                testname: '',
+                questions: [
+                    {
+                        text: '',
+                        answers: [
+                            {
+                                text: '',
+                                correct: false
+                            },
+                            {
+                                text: '',
+                                correct: false
+                            }
+                        ]
+                    }
+                ],
+            },
+            methods: {
+                insert_question() {
+                    this.questions.push(
+                        {
+                            text: '',
+                            answers: [
+                                {
+                                    text: '',
+                                    correct: false
+                                },
+                                {
+                                    text: '',
+                                    correct: false
+                                }
+                            ]
+                        }
+                    );
+                },
+                useAPI() {
+                    $.ajax({
+                        url: "http://127.0.0.1:8001/api/tests",
+                        dataType: "json",
+                        method: "POST",
+                        data: { "name": this.testname, "questions": this.questions },
+                        success: function (data) {
+                            console.log(data);
+                            setTimeout(function () { window.location.href = "./index.html"; }, 2000);
+                        }
+                    });
+                }
+            }
+        });
+    </script>
+
+    <!-- answeral JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>
